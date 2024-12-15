@@ -170,7 +170,7 @@ export class AppService {
     return posts.filter((post) => !post.user.del_flg).slice(0, postPerPage);
   }
 
-  async getPosts(before?: Date): Promise<Post[]> {
+  async getPosts(POSTS_PER_PAGE?: number, before?: Date): Promise<Post[]> {
     let cursor = 0;
     const posts = [];
     let hasMorePosts = true;
@@ -180,7 +180,7 @@ export class AppService {
           created_at: before != null ? { lte: before } : undefined,
         },
         // workaround for https://github.com/prisma/prisma/issues/13864
-        take: 1000,
+        take: POSTS_PER_PAGE,
         skip: cursor,
         orderBy: { created_at: "desc" },
       });

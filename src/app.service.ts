@@ -117,27 +117,26 @@ export class AppService {
     post: Post,
     options: { allComments: boolean },
   ): Promise<PostExt> {
-    const commentCount = await this.prisma.comment.count({
-      where: { post_id: post.id },
-    });
-
-    const comments = await this.prisma.comment.findMany({
-      where: { post_id: post.id },
-      orderBy: { created_at: "desc" },
-      take: options.allComments ? undefined : 3,
-    });
-
-    const commentExts = await Promise.all(
-      comments.map(async (comment) => {
-        return await this.makeCommentExt(comment);
+    const [commentCount, commentExts, postUser] = await Promise.all([
+      this.prisma.comment.count({
+        where: { post_id: post.id },
       }),
-    );
 
-    const postUser = await this.getUser(post.user_id);
-    if (postUser == null) {
-      throw new Error("ユーザーが見つかりません");
-    }
+      this.prisma.comment.findMany({
+        where: { post_id: post.id },
+        orderBy: { created_at: "desc" },
+        take: options.allComments ? undefined : 3,
+      }).then(comments => 
+        Promise.all(comments.map(comment => this.makeCommentExt(comment)))
+       ),
 
+       this.getUser(post.user_id).then(user => {
+         if (user == null) {
+           throw new Error("ユーザーが見つかりません");
+         }
+         return user;
+       })
+    ]);
     return {
       ...post,
       commentCount,

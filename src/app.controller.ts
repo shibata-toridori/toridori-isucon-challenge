@@ -136,8 +136,10 @@ export class AppController {
     @Param("accountName") accountName: string,
     @Session() session: ReqSession,
   ): Promise<object> {
-    const me = await this.service.getSessionUser(session);
-    const user = await this.service.getUserByAccountName(accountName);
+    const [ me, user ] = await Promise.all([
+      await this.service.getSessionUser(session),
+      await this.service.getUserByAccountName(accountName)
+    ]);
     if (user == null) {
       throw new NotFoundException("Not Found");
     }
@@ -164,8 +166,10 @@ export class AppController {
     @Session() session: ReqSession,
     @Req() req: Request,
   ): Promise<object> {
-    const me = await this.service.getSessionUser(session);
-    const posts = await this.service.getPosts(POSTS_PER_PAGE);
+    const [ me, posts ] = await Promise.all([
+      await this.service.getSessionUser(session),
+      await this.service.getPosts(POSTS_PER_PAGE)
+    ]);
     const postExts = await this.service.makePostExts(posts);
     const filteredPosts = this.service.filterPosts(postExts, POSTS_PER_PAGE);
     return { me, imageUrl, posts: filteredPosts, messages: req.flash() };
@@ -181,8 +185,10 @@ export class AppController {
     if (maxCreatedAt.toString() === "Invalid Date") {
       maxCreatedAt = new Date();
     }
-    const me = await this.service.getSessionUser(session);
-    const posts = await this.service.getPosts(POSTS_PER_PAGE, maxCreatedAt);
+    const [ me, posts ] = await Promise.all([
+      await this.service.getSessionUser(session),
+      await this.service.getPosts(POSTS_PER_PAGE, maxCreatedAt)
+    ]);
     const postExts = await this.service.makePostExts(posts);
     const filteredPosts = this.service.filterPosts(postExts, POSTS_PER_PAGE);
     return { me, imageUrl, posts: filteredPosts };
@@ -194,8 +200,10 @@ export class AppController {
     @Param("id") postIdString: string,
     @Session() session: ReqSession,
   ): Promise<object> {
-    const me = await this.service.getSessionUser(session);
-    const postId = Number(postIdString);
+    const [ me, postId ] = await Promise.all([
+      await this.service.getSessionUser(session),
+      Number(postIdString)
+    ]);
     const post = await this.service.getPost(postId);
     if (post == null) {
       throw new NotFoundException("Not Found");

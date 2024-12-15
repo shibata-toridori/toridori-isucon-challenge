@@ -137,8 +137,8 @@ export class AppController {
     @Session() session: ReqSession,
   ): Promise<object> {
     const [ me, user ] = await Promise.all([
-      await this.service.getSessionUser(session),
-      await this.service.getUserByAccountName(accountName)
+      this.service.getSessionUser(session),
+      this.service.getUserByAccountName(accountName)
     ]);
     if (user == null) {
       throw new NotFoundException("Not Found");
@@ -167,8 +167,8 @@ export class AppController {
     @Req() req: Request,
   ): Promise<object> {
     const [ me, posts ] = await Promise.all([
-      await this.service.getSessionUser(session),
-      await this.service.getPosts(POSTS_PER_PAGE)
+      this.service.getSessionUser(session),
+      this.service.getPosts(POSTS_PER_PAGE)
     ]);
     const postExts = await this.service.makePostExts(posts);
     const filteredPosts = this.service.filterPosts(postExts, POSTS_PER_PAGE);
@@ -186,8 +186,8 @@ export class AppController {
       maxCreatedAt = new Date();
     }
     const [ me, posts ] = await Promise.all([
-      await this.service.getSessionUser(session),
-      await this.service.getPosts(POSTS_PER_PAGE, maxCreatedAt)
+      this.service.getSessionUser(session),
+      this.service.getPosts(POSTS_PER_PAGE, maxCreatedAt)
     ]);
     const postExts = await this.service.makePostExts(posts);
     const filteredPosts = this.service.filterPosts(postExts, POSTS_PER_PAGE);
@@ -201,7 +201,7 @@ export class AppController {
     @Session() session: ReqSession,
   ): Promise<object> {
     const [ me, postId ] = await Promise.all([
-      await this.service.getSessionUser(session),
+      this.service.getSessionUser(session),
       Number(postIdString)
     ]);
     const post = await this.service.getPost(postId);

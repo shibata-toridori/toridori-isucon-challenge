@@ -202,35 +202,55 @@ export class AppService {
   }
 
   async getPostsByUser(user: User): Promise<Post[]> {
-    return await this.prisma.post.findMany({
-      where: { user_id: user.id },
-      orderBy: { created_at: "desc" },
-    });
+    const res = await this.prisma.user
+      .findUnique({ where: { id: user.id } })
+      .Post({ orderBy: { created_at: "desc" } });
+
+    return res || [];
   }
 
   async getPostCountByUser(user: User): Promise<number> {
-    return await this.prisma.post.count({
-      where: { user_id: user.id },
-    });
+    const res = await this.prisma.user.findUnique({
+      where: { id: user.id },
+    }).Post();
+
+    if (res == null) {
+      return 0;
+    }
+    return res.length;
   }
 
   async getCommentCountByUser(user: User): Promise<number> {
-    return await this.prisma.comment.count({
-      where: { user_id: user.id },
-    });
+    const res = await this.prisma.user.findUnique({
+      where: { id: user.id },
+    }).Comment();
+
+    if (res == null) {
+      return 0;
+    }
+    return res.length;
   }
 
   async getCommentedCountByUser(user: User): Promise<number> {
-    const posts = await this.prisma.post.findMany({
-      where: { user_id: user.id },
-    });
+    const posts = await this.prisma.user.findUnique({
+      where: { id: user.id },
+    }).Post();
+    if (posts == null) {
+      return 0;
+    }
     const postIds = posts.map((post) => post.id);
     if (postIds.length === 0) {
       return 0;
     }
-    return await this.prisma.comment.count({
-      where: { user_id: { in: postIds } },
-    });
+    const res = await this.prisma.user.findUnique({
+      where: { id: user.id },
+    }).Comment();
+
+    if (res == null) {
+      return 0;
+    }
+
+    return res.length;
   }
 
   async createPost(

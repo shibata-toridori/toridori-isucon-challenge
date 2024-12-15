@@ -117,40 +117,26 @@ export class AppService {
     post: Post,
     options: { allComments: boolean },
   ): Promise<PostExt> {
-    const commentIds = await this.prisma.post.findUnique({
-      where: { id: post.id },
-    }).Comment({
-      select: { id: true },
-    });
-
-    if (commentIds == null) {
-      throw new Error("コメントが見つかりません");
-    }
-
-    const commentCount = commentIds.length;
-
-    const comments = await this.prisma.post.findUnique({
-      where: { id: post.id },
-    }).Comment({
-      orderBy: { created_at: "desc" },
-      take: options.allComments ? undefined : 3,
-    })
-
-    if (comments == null) {
-      throw new Error("コメントが見つかりません");
-    }
-
-    const commentExts = await Promise.all(
-      comments.map(async (comment) => {
-        return await this.makeCommentExt(comment);
+    const [commentCount, commentExts, postUser] = await Promise.all([
+      this.prisma.comment.count({
+        where: { post_id: post.id },
       }),
-    );
 
-    const postUser = await this.getUser(post.user_id);
-    if (postUser == null) {
-      throw new Error("ユーザーが見つかりません");
-    }
+      this.prisma.comment.findMany({
+        where: { post_id: post.id },
+        orderBy: { created_at: "desc" },
+        take: options.allComments ? undefined : 3,
+      }).then(comments => 
+        Promise.all(comments.map(comment => this.makeCommentExt(comment)))
+       ),
 
+       this.getUser(post.user_id).then(user => {
+         if (user == null) {
+           throw new Error("ユーザーが見つかりません");
+         }
+         return user;
+       })
+    ]);
     return {
       ...post,
       commentCount,
